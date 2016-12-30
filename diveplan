@@ -1,0 +1,180 @@
+#!/usr/bin/python3
+
+import csv
+import time
+import itertools
+from docx import Document 
+from docx.shared import Pt 
+
+#pip install python-docx
+
+#Data from data.marine.ie/Dataset/Details/20955
+
+class DivePlan(object):
+    def __init__(self):
+       self.document = Document()
+       style = self.document.styles['Normal']
+       font = style.font
+       font.name = "Arial"
+       font.size = Pt(10)
+
+       table = self.document.add_table(10,2)
+
+       cell = table.cell(0,0)
+       p = cell.add_paragraph("Burren Sub Aqua Club") 
+       p = cell.add_paragraph("SNORKEL / DIVE PLAN") 
+       p = cell.add_paragraph("Month 2016") 
+       cell = table.cell(0,1)
+       p = cell.add_paragraph() 
+       r = p.add_run()
+       r.add_picture('Burren-Sub-Aqua-Logo.jpg')
+
+
+       c1 = table.cell(1,0) 
+       c2 = table.cell(1,1) 
+       c1.merge(c2)
+       c1.add_paragraph("A kitted brief should take place 15 mins before dive departure times")
+      
+       c1 = table.cell(2,0) 
+       c2 = table.cell(2,1) 
+       c1.merge(c2)
+       self.dive_table = c1.add_table(1,1)
+       self.dive_table.style = 'Table Grid'
+
+       c1 = table.cell(3,0) 
+       c2 = table.cell(3,1) 
+       c1.merge(c2)
+
+       c1.add_paragraph("Note: Please check with the DOD if in doubt about conditions, particularly with strong westerly winds.")
+       c1.add_paragraph("Note: The dives at 09.00am on Sundays are for Club Diver** and up only, unless announced otherwise")
+       c1.add_paragraph("All members: if you intend to dive, please text the relevant DOD by 18.00 on the preceding Friday (Sunday dives), or by 18.00 hours on the preceding Monday (Wednesday dives).  This allows DODs time to plan dives and make alternative arrangements if necessary.  Divers who text after the deadline will be assigned a dive only if space allows, to be treated on a first come, first served basis")
+       c1.add_paragraph("DODs / Dry Cox’ns: if you are unavailable for your slot, please arrange a swap yourself with someone else in good time and text me the new arrangement.  Please text members of a DOD change to avoid confusion.")
+       c1.add_paragraph("DODs / Dry Cox’ns: please communicate and check with James in good time that he is available to bring the boat to the dive site, and make alternative arrangements if necessary.")
+       c1.add_paragraph("Members undertaking dives outside the dive plan should inform me; otherwise, they cannot be regarded as club dives for insurance purposes.")
+       c1.add_paragraph("LIFE JACKETS MUST BE WORN ON THE BOAT")
+       c1.add_paragraph("DODs: ALL DIVE LOGS MUST BE FILLED AND RETAINED.  PLEASE PLACE IN THE JEEP WHEN COMPLETED.")
+
+       c1 = table.cell(4,0) 
+       c2 = table.cell(4,1) 
+       c1.merge(c2)
+       c1.add_paragraph("DODs: ALL DIVE LOGS MUST BE FILLED AND RETAINED.  PLEASE PLACE IN THE JEEP WHEN COMPLETED.")
+
+       c1 = table.cell(5,0) 
+       c1.add_paragraph("Cormac McMahon - 086 8119068")
+       c1 = table.cell(6,0) 
+       c1.add_paragraph("James McMahon - 087 6898005")
+       c1 = table.cell(7,0) 
+       c1.add_paragraph("Mary O'Donnell - 087 9845073")
+       c1 = table.cell(8,0) 
+       c1.add_paragraph("Alex McMahon - 086 8795949")
+       c1 = table.cell(5,1) 
+       c1.add_paragraph("Tadhg O'Brien - 086 8180044")
+       c1 = table.cell(6,1) 
+       c1.add_paragraph("John Underhill - 087 7537738")
+       c1 = table.cell(7,1) 
+       c1.add_paragraph("Caroline Hartigan - 087 2334748")
+       c1 = table.cell(8,1) 
+       c1.add_paragraph("Mark Gray - 085 7127021")
+
+    def add_dive(self, day, date, venue, time, dod, coxn, hw, lw): 
+       r = self.dive_table.add_row()
+       c = r.cells[0]
+       t = c.add_table(1,8)
+       t.cell(0,0).add_paragraph(day)
+       t.cell(0,1).add_paragraph(date)
+       t.cell(0,2).add_paragraph(venue)
+       t.cell(0,3).add_paragraph(time)
+       t.cell(0,4).add_paragraph(dod)
+       t.cell(0,5).add_paragraph(coxn)
+       t.cell(0,6).add_paragraph(hw)
+       t.cell(0,7).add_paragraph(lw)
+
+       
+    def publish(self):
+       self.document.save('demo.docx')   
+
+class Tide(object):
+      def __init__(self, level, time, type):
+            self.level = level
+            self.time = time
+            self.type = type
+      def get_time(self):
+            return time.strftime("%H:%M", self.time)
+      def get_date(self):
+            return time.strftime("%d/%m/%y", self.time)
+      def get_type(self):
+            return self.type
+      def get_level(self):
+            return self.level
+      def __str__(self):
+            return self.get_type()+"("+self.get_level()+"):"+self.get_date()+" "+self.get_time()
+
+class TideParse(object):
+      def __init__(self, level, time):
+            self.levels = []
+            self.times = []
+            self.increasing = None 
+            self.max = level
+            self.min = level
+            self.levels.append(level)
+            self.times.append(time)
+      
+      def add(self, level, time):
+            self.levels.append(level)
+            self.times.append(time)
+            return self.parse()
+
+      def format(self,str):
+            return time.strptime(str, "%Y-%m-%dT%H:%M:%SZ")
+
+      def get_time(self, level):
+            return self.times[self.levels.index(level)] 
+
+      def parse(self):
+           if (self.max != max(self.levels)):
+                  #Values increasing, rising tide
+                  self.increasing = True
+                  self.max = max(self.levels) 
+                  return None
+           if (self.min != min(self.levels)):
+                  #Values decreasing, falling tide
+                  self.increasing = False
+                  self.min = min(self.levels) 
+                  return None 
+           if (self.max != max(self.levels)) & (self.min != min(self.levels)):
+                  raise Exception("minmax error")
+           if (self.max == max(self.levels)) & (self.min == min(self.levels)):
+                  #Possible turning point
+                  if (self.increasing == True) & (self.levels[-1] < self.levels[-2]):
+                      t = self.format(self.get_time(self.max)) 
+                      return Tide(self.max, t, "High")
+                  elif (self.increasing == False) & (self.levels[-1] > self.levels[-2]):
+                      t = self.format(self.get_time(self.min)) 
+                      return Tide(self.min, t, "Low")
+                  else:
+                      return None
+
+# First we read the csv file and parse all the high/low tides
+tide_list = []
+
+with open('data.csv', 'r') as csvfile:
+   tidedata = csv.DictReader(csvfile)
+   row = next(tidedata)
+
+   tc = TideParse(row['Water_Level'], row['time'])
+ 
+   for row in tidedata:
+        tide = tc.add(row['Water_Level'], row['time'])
+        if tide:
+              tide_list.append(tide)
+              tc = TideParse(row['Water_Level'], row['time'])
+
+   matches = [tide for tide in tide_list if tide.get_date() == "10/12/16"]
+
+   diveplan = DivePlan()
+   
+   for dive in matches:
+
+       diveplan.add_dive("Sun", "June 11th", "Doolin", "09:00", "Mark", "Mark", "05:00 4.8m", "10:55 0.2m")
+   diveplan.publish()
+
