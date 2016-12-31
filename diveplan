@@ -234,7 +234,7 @@ with open('data.csv', 'r') as csvfile:
    print(rule_of_twelfths(5, 0.1,  4))
     
                                      
-#diveplan = DivePlan()
+   diveplan = DivePlan()
     
    start = datetime.date(year = 2017, month = 1, day = 1 )
    end = datetime.date(year = 2017, month = 1, day = 31 )
@@ -249,13 +249,29 @@ with open('data.csv', 'r') as csvfile:
            low = [tide for tide in tides if tide.isNear(date_string) and tide.get_type() == "Low"]
            level = levels["2017-{:02d}-{:02d}T11:00:00Z".format(date.month, date.day)]
 
-           print(date_string, level, high[0], low[0]),
+           site = ""
            if white_strand_start(float(level)):
-               print("White Strand"),
+               site += "White Strand\n"
            if gleninagh_start(float(level)):
-               print("Gleninagh Pier"),
+               site += "Gleninagh Pier\n"
            if ballyvaughan_start(float(level)):
-               print("Ballyvaughan Pier"),
+               site += "Ballyvaughan Pier\n"
+
+           if high[0]:
+               high_time = high[0].get_time() 
+               high_level = high[0].get_level() 
+           else:
+               high_time = ""
+               high_level = ""
    
-#diveplan.add_dive("Sun", "June 11th", "Doolin", "09:00", "Mark", "Mark", "05:00 4.8m", "10:55 0.2m")
-#diveplan.publish()
+           if low[0]:
+               low_time = low[0].get_time() 
+               low_level = low[0].get_level() 
+           else:
+               low_time = ""
+               low_level = ""
+
+           diveplan.add_dive("", "", "", "", "", "", "", "")
+           diveplan.add_dive(date.strftime("%a"), date.strftime("%b\n%d"), site, "11:00", "", "", "{}\n{}m".format(high_time, high_level), "{}\n{}m".format(low_time, low_level))
+
+   diveplan.publish()
