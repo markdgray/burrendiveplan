@@ -1,6 +1,8 @@
 #!/usr/bin/python3
 
 import csv
+import datetime
+import math
 import time
 import itertools
 from docx import Document 
@@ -10,6 +12,44 @@ from docx.shared import Pt
 
 #Data from data.marine.ie/Dataset/Details/20955
 
+def daterange(start_date, end_date):
+    if start_date <= end_date:
+        for n in range((end_date - start_date).days + 1):
+            yield start_date + datetime.timedelta(n)
+
+def white_strand_start(level):
+    max_level = rule_of_twelfths(lahinch_spring_high_tide, lahinch_spring_low_tide, 1) 
+    min_level = -math.inf
+    return level < max_level and level > min_level 
+
+def white_strand_end(level):
+    max_level = rule_of_twelfths(lahinch_spring_high_tide, lahinch_spring_low_tide, 1) 
+    min_level = -math.inf
+    return level < max_level and level > min_level 
+
+def ballyvaughan_start(level):
+    max_level = rule_of_twelfths(lahinch_spring_high_tide, lahinch_spring_low_tide, 0) 
+    min_level = rule_of_twelfths(lahinch_neap_high_tide, lahinch_neap_low_tide, 1.5) 
+    return level < max_level and level > min_level 
+
+def ballyvaughan_end(level):
+    max_level = rule_of_twelfths(lahinch_spring_high_tide, lahinch_spring_low_tide, 0) 
+    min_level = rule_of_twelfths(lahinch_neap_high_tide, lahinch_neap_low_tide, 1.5) 
+    return level < max_level and level > min_level 
+
+def gleninagh_start(level):
+    max_level = rule_of_twelfths(lahinch_spring_high_tide, lahinch_spring_low_tide, 1) 
+    min_level = -math.inf
+    return level < max_level and level > min_level 
+
+def gleninagh_end(level):
+    max_level = rule_of_twelfths(lahinch_spring_high_tide, lahinch_spring_low_tide, 1) 
+    min_level = -math.inf
+    return level < max_level and level > min_level 
+    
+def rule_of_twelfths(high, low, time): # time in hours relative to high
+     range = float(high)- float(low)
+     return float(low) + (range * (math.cos(math.pi * time/6) + 1 ) / 2)
 class DivePlan(object):
     def __init__(self):
        self.document = Document()
@@ -108,6 +148,10 @@ class Tide(object):
             return self.level
       def __str__(self):
             return self.get_type()+"("+self.get_level()+"):"+self.get_date()+" "+self.get_time()
+      def isNear(self, time_str):
+            current_time = time.strptime(time_str, "%H:%M %d/%m/%y")
+            diff_time = time.mktime(current_time) - time.mktime(self.time)
+            return abs(diff_time / 60 / 60) < 6
 
 class TideParse(object):
       def __init__(self, level, time):
@@ -156,25 +200,62 @@ class TideParse(object):
 
 # First we read the csv file and parse all the high/low tides
 tide_list = []
+levels = {}
 
+                                         
 with open('data.csv', 'r') as csvfile:
    tidedata = csv.DictReader(csvfile)
    row = next(tidedata)
 
    tc = TideParse(row['Water_Level'], row['time'])
- 
+   levels.update({row['time'] : row['Water_Level']}) 
+   
    for row in tidedata:
         tide = tc.add(row['Water_Level'], row['time'])
+        levels.update({row['time'] : row['Water_Level']}) 
+
         if tide:
               tide_list.append(tide)
               tc = TideParse(row['Water_Level'], row['time'])
 
-   matches = [tide for tide in tide_list if tide.get_date() == "10/12/16"]
+   high_tides = [tide for tide in tide_list if tide.get_type() == "High"]
+   lahinch_spring_high_tide = max(tide.get_level() for tide in high_tides)
+   lahinch_neap_high_tide = min(tide.get_level() for tide in high_tides)
+   low_tides = [tide for tide in tide_list if tide.get_type() == "Low"]
+   lahinch_spring_low_tide = min(tide.get_level() for tide in low_tides)
+   lahinch_neap_low_tide = max(tide.get_level() for tide in low_tides)
+    
 
-   diveplan = DivePlan()
+   print("Spring high: ", lahinch_spring_high_tide)
+   print("Neap high:   ", lahinch_neap_high_tide)
+   print("Spring low:  ", lahinch_spring_low_tide)
+   print("Neap Low:    ", lahinch_neap_low_tide)
+
+   print(rule_of_twelfths(5, 0.1,  4))
+    
+                                     
+#diveplan = DivePlan()
+    
+   start = datetime.date(year = 2017, month = 1, day = 1 )
+   end = datetime.date(year = 2017, month = 1, day = 31 )
+ 
+   for date in daterange( start, end ):
+       if date.weekday() == 6:
+           # define date string
+           date_string = "11:00 {}/{}/17".format(date.day, date.month)
+           print(date_string)
+           tides = [tide for tide in tide_list if tide.isNear(date_string)]
+           high = [tide for tide in tides if tide.isNear(date_string) and tide.get_type() == "High"]
+           low = [tide for tide in tides if tide.isNear(date_string) and tide.get_type() == "Low"]
+           level = levels["2017-{:02d}-{:02d}T11:00:00Z".format(date.month, date.day)]
+
+           print(date_string, level, high[0], low[0]),
+           if white_strand_start(float(level)):
+               print("White Strand"),
+           if gleninagh_start(float(level)):
+               print("Gleninagh Pier"),
+           if ballyvaughan_start(float(level)):
+               print("Ballyvaughan Pier"),
    
-   for dive in matches:
-
-       diveplan.add_dive("Sun", "June 11th", "Doolin", "09:00", "Mark", "Mark", "05:00 4.8m", "10:55 0.2m")
-   diveplan.publish()
-
+#diveplan.add_dive("Sun", "June 11th", "Doolin", "09:00", "Mark", "Mark", "05:00 4.8m", "10:55 0.2m")
+#diveplan.publish()
