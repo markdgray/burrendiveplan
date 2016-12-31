@@ -5,6 +5,9 @@ import datetime
 import math
 import time
 import itertools
+from docx.enum.style import WD_STYLE_TYPE
+from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.enum.table import WD_TABLE_ALIGNMENT
 from docx import Document 
 from docx.shared import Pt 
 
@@ -57,13 +60,66 @@ class DivePlan(object):
        font = style.font
        font.name = "Arial"
        font.size = Pt(10)
+      
+       styles = self.document.styles
+       style = styles.add_style('Bold Style', WD_STYLE_TYPE.PARAGRAPH) 
+       style.base_style = styles['Normal']
+       font = style.font
+       font.bold = True
 
+       style = styles.add_style('Bold Underline Style', WD_STYLE_TYPE.PARAGRAPH) 
+       style.base_style = styles['Normal']
+       font = style.font
+       font.bold = True
+       font.underline = True
+
+       style = styles.add_style('Bold Large Style', WD_STYLE_TYPE.PARAGRAPH) 
+       style.base_style = styles['Normal']
+       font = style.font
+       font.bold = True
+       font.size = Pt(16)
+
+       style = styles.add_style('Bold Underline Large Style', WD_STYLE_TYPE.PARAGRAPH) 
+       style.base_style = styles['Normal']
+       font = style.font
+       font.bold = True
+       font.underline = True
+       font.size = Pt(16)
+
+       styles = self.document.styles
+       style = styles.add_style('Bold StyleC', WD_STYLE_TYPE.CHARACTER) 
+       style.base_style = styles['Normal']
+       font = style.font
+       font.bold = True
+
+       style = styles.add_style('Bold Underline StyleC', WD_STYLE_TYPE.CHARACTER) 
+       style.base_style = styles['Normal']
+       font = style.font
+       font.bold = True
+       font.underline = True
+
+       style = styles.add_style('Bold Large StyleC', WD_STYLE_TYPE.CHARACTER) 
+       style.base_style = styles['Normal']
+       font = style.font
+       font.bold = True
+       font.size = Pt(16)
+
+       style = styles.add_style('Bold Underline Large StyleC', WD_STYLE_TYPE.CHARACTER) 
+       style.base_style = styles['Normal']
+       font = style.font
+       font.bold = True
+       font.underline = True
+       font.size = Pt(16)
        table = self.document.add_table(10,2)
 
        cell = table.cell(0,0)
-       p = cell.add_paragraph("Burren Sub Aqua Club") 
-       p = cell.add_paragraph("SNORKEL / DIVE PLAN") 
-       p = cell.add_paragraph("Month 2016") 
+       p = cell.add_paragraph("Burren Sub Aqua Club\n")
+       p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+       p.add_run("SNORKEL / DIVE PLAN\n")
+       r = p.add_run("Month 2016") 
+       r.style = self.document.styles['Bold Underline Large StyleC']
+
+       p.style = self.document.styles['Bold Large Style']
        cell = table.cell(0,1)
        p = cell.add_paragraph() 
        r = p.add_run()
@@ -73,62 +129,101 @@ class DivePlan(object):
        c1 = table.cell(1,0) 
        c2 = table.cell(1,1) 
        c1.merge(c2)
-       c1.add_paragraph("A kitted brief should take place 15 mins before dive departure times")
+       p = c1.add_paragraph("A kitted brief should take place ")
+       r = p.add_run("15 mins")
+       r.style = self.document.styles['Bold Underline StyleC']
+       p.add_run(" before dive departure times")
+       p.alignment = WD_ALIGN_PARAGRAPH.CENTER
       
        c1 = table.cell(2,0) 
        c2 = table.cell(2,1) 
        c1.merge(c2)
-       self.dive_table = c1.add_table(1,1)
+       self.dive_table = c1.add_table(1,8)
        self.dive_table.style = 'Table Grid'
+       self.dive_table.alignment = WD_TABLE_ALIGNMENT.CENTER
+
 
        c1 = table.cell(3,0) 
        c2 = table.cell(3,1) 
        c1.merge(c2)
 
-       c1.add_paragraph("Note: Please check with the DOD if in doubt about conditions, particularly with strong westerly winds.")
+       p = c1.add_paragraph("Note: Please check with the DOD if in doubt about conditions, particularly with strong westerly winds.")
+       p.style = self.document.styles['Bold Underline Style']
+       p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+
        c1.add_paragraph("Note: The dives at 09.00am on Sundays are for Club Diver** and up only, unless announced otherwise")
-       c1.add_paragraph("All members: if you intend to dive, please text the relevant DOD by 18.00 on the preceding Friday (Sunday dives), or by 18.00 hours on the preceding Monday (Wednesday dives).  This allows DODs time to plan dives and make alternative arrangements if necessary.  Divers who text after the deadline will be assigned a dive only if space allows, to be treated on a first come, first served basis")
-       c1.add_paragraph("DODs / Dry Cox’ns: if you are unavailable for your slot, please arrange a swap yourself with someone else in good time and text me the new arrangement.  Please text members of a DOD change to avoid confusion.")
-       c1.add_paragraph("DODs / Dry Cox’ns: please communicate and check with James in good time that he is available to bring the boat to the dive site, and make alternative arrangements if necessary.")
+       p = c1.add_paragraph()
+       r = p.add_run("All members: ")
+       r.style = self.document.styles['Bold Underline StyleC']
+       p.add_run("if you intend to dive, please text the relevant DOD by 18.00 on the preceding Friday (Sunday dives), or by 18.00 hours on the preceding Monday (Wednesday dives).  This allows DODs time to plan dives and make alternative arrangements if necessary.  Divers who text after the deadline will be assigned a dive only if space allows, to be treated on a first come, first served basis")
+       p = c1.add_paragraph()
+       r = p.add_run("DODs / Dry Coxns: ")
+       r.style = self.document.styles['Bold Underline StyleC']
+       p.add_run("if you are unavailable for your slot, please arrange a swap yourself with someone else in good time and text me the new arrangement.  Please text members of a DOD change to avoid confusion.")
+       p = c1.add_paragraph()
+       r = p.add_run("DODs / Dry Coxns: ")
+       r.style = self.document.styles['Bold Underline StyleC']
+       p.add_run("please communicate and check with James in good time that he is available to bring the boat to the dive site, and make alternative arrangements if necessary.")
        c1.add_paragraph("Members undertaking dives outside the dive plan should inform me; otherwise, they cannot be regarded as club dives for insurance purposes.")
-       c1.add_paragraph("LIFE JACKETS MUST BE WORN ON THE BOAT")
-       c1.add_paragraph("DODs: ALL DIVE LOGS MUST BE FILLED AND RETAINED.  PLEASE PLACE IN THE JEEP WHEN COMPLETED.")
+       p = c1.add_paragraph("LIFE JACKETS MUST BE WORN ON THE BOAT")
+       p.style = self.document.styles['Bold Underline Style']
+       p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+       p = c1.add_paragraph("DODs: ALL DIVE LOGS MUST BE FILLED AND RETAINED.  PLEASE PLACE IN THE JEEP WHEN COMPLETED.")
+       p.style = self.document.styles['Bold Style']
+       p.alignment = WD_ALIGN_PARAGRAPH.CENTER
 
        c1 = table.cell(4,0) 
        c2 = table.cell(4,1) 
        c1.merge(c2)
-       c1.add_paragraph("DODs: ALL DIVE LOGS MUST BE FILLED AND RETAINED.  PLEASE PLACE IN THE JEEP WHEN COMPLETED.")
+       p = c1.add_paragraph("DOD/COXN Telephone Numbers:")
+       p.style = self.document.styles['Bold Underline Style']
+       p.alignment = WD_ALIGN_PARAGRAPH.CENTER
 
        c1 = table.cell(5,0) 
+       c2 = table.cell(5,1) 
+       c1.merge(c2)
+       t = c1.add_table(4,2)
+       t.style = 'Table Grid'
+       c1 = t.cell(0,0) 
        c1.add_paragraph("Cormac McMahon - 086 8119068")
-       c1 = table.cell(6,0) 
+       c1 = t.cell(1,0) 
        c1.add_paragraph("James McMahon - 087 6898005")
-       c1 = table.cell(7,0) 
+       c1 = t.cell(2,0) 
        c1.add_paragraph("Mary O'Donnell - 087 9845073")
-       c1 = table.cell(8,0) 
+       c1 = t.cell(3,0) 
        c1.add_paragraph("Alex McMahon - 086 8795949")
-       c1 = table.cell(5,1) 
+       c1 = t.cell(0,1) 
        c1.add_paragraph("Tadhg O'Brien - 086 8180044")
-       c1 = table.cell(6,1) 
+       c1 = t.cell(1,1) 
        c1.add_paragraph("John Underhill - 087 7537738")
-       c1 = table.cell(7,1) 
+       c1 = t.cell(2,1) 
        c1.add_paragraph("Caroline Hartigan - 087 2334748")
-       c1 = table.cell(8,1) 
+       c1 = t.cell(3,1) 
        c1.add_paragraph("Mark Gray - 085 7127021")
 
     def add_dive(self, day, date, venue, time, dod, coxn, hw, lw): 
        r = self.dive_table.add_row()
-       c = r.cells[0]
-       t = c.add_table(1,8)
-       t.cell(0,0).add_paragraph(day)
-       t.cell(0,1).add_paragraph(date)
-       t.cell(0,2).add_paragraph(venue)
-       t.cell(0,3).add_paragraph(time)
-       t.cell(0,4).add_paragraph(dod)
-       t.cell(0,5).add_paragraph(coxn)
-       t.cell(0,6).add_paragraph(hw)
-       t.cell(0,7).add_paragraph(lw)
-
+       r.cells[0].text = day 
+       r.cells[1].text = date 
+       r.cells[2].text = venue
+       r.cells[3].text = time 
+       r.cells[4].text = dod 
+       r.cells[5].text = coxn 
+       r.cells[6].text = hw 
+       r.cells[7].text = lw 
+       return r
+       
+    def add_header(self, day, date, venue, time, dod, coxn, hw, lw): 
+       r = self.dive_table.add_row()
+       r.style = self.document.styles['Bold Underline Style']
+       r.cells[0].text = day 
+       r.cells[1].text = date 
+       r.cells[2].text = venue
+       r.cells[3].text = time 
+       r.cells[4].text = dod 
+       r.cells[5].text = coxn 
+       r.cells[6].text = hw 
+       r.cells[7].text = lw 
        
     def publish(self):
        self.document.save('demo.docx')   
@@ -235,6 +330,7 @@ with open('data.csv', 'r') as csvfile:
     
                                      
    diveplan = DivePlan()
+   diveplan.add_dive("Day", "Date", "Venue", "Time", "DoD", "Coxn", "HW", "LW")
     
    start = datetime.date(year = 2017, month = 1, day = 1 )
    end = datetime.date(year = 2017, month = 1, day = 31 )
@@ -242,12 +338,12 @@ with open('data.csv', 'r') as csvfile:
    for date in daterange( start, end ):
        if date.weekday() == 6:
            # define date string
-           date_string = "11:00 {}/{}/17".format(date.day, date.month)
+           date_string = "09:00 {}/{}/17".format(date.day, date.month)
            print(date_string)
            tides = [tide for tide in tide_list if tide.isNear(date_string)]
            high = [tide for tide in tides if tide.isNear(date_string) and tide.get_type() == "High"]
            low = [tide for tide in tides if tide.isNear(date_string) and tide.get_type() == "Low"]
-           level = levels["2017-{:02d}-{:02d}T11:00:00Z".format(date.month, date.day)]
+           level = levels["2017-{:02d}-{:02d}T09:00:00Z".format(date.month, date.day)]
 
            site = ""
            if white_strand_start(float(level)):
@@ -257,21 +353,94 @@ with open('data.csv', 'r') as csvfile:
            if ballyvaughan_start(float(level)):
                site += "Ballyvaughan Pier\n"
 
-           if high[0]:
+           if high:
                high_time = high[0].get_time() 
                high_level = high[0].get_level() 
            else:
                high_time = ""
                high_level = ""
    
-           if low[0]:
+           if low:
                low_time = low[0].get_time() 
                low_level = low[0].get_level() 
            else:
                low_time = ""
                low_level = ""
 
+           r1 = diveplan.add_dive(date.strftime("%a"), date.strftime("%b\n%d"), site, "09:00", "", "", "{}\n{}m".format(high_time, high_level), "{}\n{}m".format(low_time, low_level))
+           # define date string
+           date_string = "12:00 {}/{}/17".format(date.day, date.month)
+           print(date_string)
+           tides = [tide for tide in tide_list if tide.isNear(date_string)]
+           high = [tide for tide in tides if tide.isNear(date_string) and tide.get_type() == "High"]
+           low = [tide for tide in tides if tide.isNear(date_string) and tide.get_type() == "Low"]
+           level = levels["2017-{:02d}-{:02d}T12:00:00Z".format(date.month, date.day)]
+
+           site = ""
+           if white_strand_start(float(level)):
+               site += "White Strand\n"
+           if gleninagh_start(float(level)):
+               site += "Gleninagh Pier\n"
+           if ballyvaughan_start(float(level)):
+               site += "Ballyvaughan Pier\n"
+
+           if high:
+               high_time = high[0].get_time() 
+               high_level = high[0].get_level() 
+           else:
+               high_time = ""
+               high_level = ""
+   
+           if low:
+               low_time = low[0].get_time() 
+               low_level = low[0].get_level() 
+           else:
+               low_time = ""
+               low_level = ""
+
+           r2 = diveplan.add_dive(date.strftime("%a"), date.strftime("%b\n%d"), site, "12:00", "", "", "{}\n{}m".format(high_time, high_level), "{}\n{}m".format(low_time, low_level))
+
+           for id in [0,1,2,6,7]: 
+               c1 = r1.cells[id]
+               text = c1.text
+               c2 = r2.cells[id]
+               c1 = c1.merge(c2)
+               c1.text = text
+               
+    
            diveplan.add_dive("", "", "", "", "", "", "", "")
-           diveplan.add_dive(date.strftime("%a"), date.strftime("%b\n%d"), site, "11:00", "", "", "{}\n{}m".format(high_time, high_level), "{}\n{}m".format(low_time, low_level))
+       if date.weekday() == 2:
+           # define date string
+           date_string = "19:00 {}/{}/17".format(date.day, date.month)
+           print(date_string)
+           tides = [tide for tide in tide_list if tide.isNear(date_string)]
+           high = [tide for tide in tides if tide.isNear(date_string) and tide.get_type() == "High"]
+           low = [tide for tide in tides if tide.isNear(date_string) and tide.get_type() == "Low"]
+           level = levels["2017-{:02d}-{:02d}T19:00:00Z".format(date.month, date.day)]
+
+           site = ""
+           if white_strand_start(float(level)):
+               site += "White Strand\n"
+           if gleninagh_start(float(level)):
+               site += "Gleninagh Pier\n"
+           if ballyvaughan_start(float(level)):
+               site += "Ballyvaughan Pier\n"
+
+           if high:
+               high_time = high[0].get_time() 
+               high_level = high[0].get_level() 
+           else:
+               high_time = ""
+               high_level = ""
+   
+           if low:
+               low_time = low[0].get_time() 
+               low_level = low[0].get_level() 
+           else:
+               low_time = ""
+               low_level = ""
+
+           diveplan.add_dive(date.strftime("%a"), date.strftime("%b\n%d"), site, "19:00", "", "", "{}\n{}m".format(high_time, high_level), "{}\n{}m".format(low_time, low_level))
+           diveplan.add_dive("", "", "", "", "", "", "", "")
 
    diveplan.publish()
