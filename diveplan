@@ -50,6 +50,36 @@ def gleninagh_end(level):
     min_level = -math.inf
     return level < max_level and level > min_level 
     
+def quilty_start(level):
+    min_level = rule_of_twelfths(lahinch_neap_high_tide, lahinch_neap_low_tide, 0) 
+    max_level = math.inf
+    return level < max_level and level > min_level 
+
+def quilty_end(level):
+    max_level = math.inf
+    min_level = -math.inf
+    return level < max_level and level > min_level 
+
+def kilkee_start(level):
+    max_level =  math.inf
+    min_level = rule_of_twelfths(lahinch_spring_high_tide, lahinch_spring_low_tide, 5) 
+    return level < max_level and level > min_level 
+
+def kilkee_end(level):
+    max_level = math.inf 
+    min_level = -math.inf
+    return level < max_level and level > min_level 
+
+def doolin_start(level):
+    max_level = math.inf
+    min_level = -math.inf
+    return level < max_level and level > min_level 
+
+def doolin_end(level):
+    max_level = math.inf 
+    min_level = -math.inf
+    return level < max_level and level > min_level 
+    
 def rule_of_twelfths(high, low, time): # time in hours relative to high
      range = float(high)- float(low)
      return float(low) + (range * (math.cos(math.pi * time/6) + 1 ) / 2)
@@ -352,6 +382,12 @@ with open('data.csv', 'r') as csvfile:
                site += "Gleninagh Pier\n"
            if ballyvaughan_start(float(level)):
                site += "Ballyvaughan Pier\n"
+           if quilty_start(float(level)):
+               site += "Quilty\n"
+           if doolin_start(float(level)):
+               site += "Doolin\n"
+           if kilkee_start(float(level)):
+               site += "Kilkee\n"
 
            if high:
                high_time = high[0].get_time() 
@@ -383,6 +419,12 @@ with open('data.csv', 'r') as csvfile:
                site += "Gleninagh Pier\n"
            if ballyvaughan_start(float(level)):
                site += "Ballyvaughan Pier\n"
+           if quilty_start(float(level)):
+               site += "Quilty\n"
+           if doolin_start(float(level)):
+               site += "Doolin\n"
+           if kilkee_start(float(level)):
+               site += "Kilkee\n"
 
            if high:
                high_time = high[0].get_time() 
@@ -425,6 +467,12 @@ with open('data.csv', 'r') as csvfile:
                site += "Gleninagh Pier\n"
            if ballyvaughan_start(float(level)):
                site += "Ballyvaughan Pier\n"
+           if quilty_start(float(level)):
+               site += "Quilty\n"
+           if doolin_start(float(level)):
+               site += "Doolin\n"
+           if kilkee_start(float(level)):
+               site += "Kilkee\n"
 
            if high:
                high_time = high[0].get_time() 
