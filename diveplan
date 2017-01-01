@@ -339,8 +339,10 @@ lahinch_neap_low_tide = 0
 def main(argv):
 
     data = 'data.csv'
+    publish = False
+
     try:
-        opts, args = getopt.getopt(argv,"hd:",["data="])
+        opts, args = getopt.getopt(argv,"hd:p",["data="])
     except getopt.GetoptError:
         print("diveplan -d <inputfile>")
         sys.exit(2)
@@ -348,6 +350,8 @@ def main(argv):
         if opt == '-h':
             print ("diveplan -d <inputfile>")
             sys.exit()
+        elif opt in ("-p"):
+            publish = True
         elif opt in ("-d", "--data"):
             data = arg
               
@@ -512,7 +516,8 @@ def main(argv):
                diveplan.add_dive(date.strftime("%a"), date.strftime("%b\n%d"), site, "19:00", "", "", "{}\n{}m".format(high_time, high_level), "{}\n{}m".format(low_time, low_level))
                diveplan.add_blank()
 
-       diveplan.publish()
+       if publish:
+           diveplan.publish()
 
 
 
