@@ -17,10 +17,13 @@ from docx.shared import Pt
 
 #Data from data.marine.ie/Dataset/Details/20955
 
-def daterange(start_date, end_date):
-    if start_date <= end_date:
-        for n in range((end_date - start_date).days + 1):
-            yield start_date + datetime.timedelta(n)
+def parsetime(time):
+    return datetime.datetime.strptime(time, "%Y-%m-%dT%H:%M:%SZ")
+
+def daterange(start, end):
+    if start <= end:
+        for n in range((end - start).days + 1):
+            yield start + datetime.timedelta(n)
 
 def white_strand_start(level):
     max_level = rule_of_twelfths(max_spring_high_tide, min_spring_low_tide, 1) 
@@ -85,6 +88,7 @@ def doolin_end(level):
 def rule_of_twelfths(high, low, time): # time in hours relative to high
      range = float(high)- float(low)
      return float(low) + (range * (math.cos(math.pi * time/6) + 1 ) / 2)
+                                         
 class DivePlan(object):
     def __init__(self):
        self.document = Document()
@@ -233,17 +237,17 @@ class DivePlan(object):
        c1 = t.cell(3,1) 
        c1.add_paragraph("Mark Gray - 085 7127021")
 
-    def add_dive(self, day, date, venue, time, dod, coxn, hw, lw): 
+    def add_dive(self, time, venue, dod, coxn, hw, lw): 
        r = self.dive_table.add_row()
-       r.cells[0].text = day 
-       r.cells[1].text = date 
+       r.cells[0].text = time.strftime("%a")
+       r.cells[1].text = time.strftime("%b\n%d")
        r.cells[2].text = venue
-       r.cells[3].text = time 
+       r.cells[3].text = time.strftime("%H:%M")
        r.cells[4].text = dod 
        r.cells[5].text = coxn 
        r.cells[6].text = hw 
        r.cells[7].text = lw 
-       print("Day:", day, ",Date:", date.replace('\n', ' '), ",Venue:", venue.replace('\n',' '), ",Time:", time, ",HW:", hw.replace('\n',' '), ",LW:", lw.replace('\n',' ')) 
+       print("Day:", time.strftime("%a"), ",Date:", time.strftime("%b %d"), ",Venue:", venue.replace('\n',' '), ",Time:", time.strftime("%H:%M"), ",HW:", hw.replace('\n',' '), ",LW:", lw.replace('\n',' ')) 
        return r
        
     def add_blank(self): 
@@ -271,19 +275,16 @@ class Tide(object):
             self.time = time
             self.type = type
       def get_time(self):
-            return time.strftime("%H:%M", self.time)
-      def get_date(self):
-            return time.strftime("%d/%m/%y", self.time)
+            return self.time
       def get_type(self):
             return self.type
       def get_level(self):
             return self.level
       def __str__(self):
-            return self.get_type()+"("+self.get_level()+"):"+self.get_date()+" "+self.get_time()
-      def isNear(self, time_str):
-            current_time = time.strptime(time_str, "%H:%M %d/%m/%y")
-            diff_time = time.mktime(current_time) - time.mktime(self.time)
-            return abs(diff_time / 60 / 60) < 6
+            return self.get_type()+"("+self.get_level()+"):"+self.time.strftime("%H:%M")
+      def isNear(self, t):
+            delta = t - self.time
+            return delta < datetime.timedelta(hours=6)
 
 class TideParse(object):
       def __init__(self, level, time):
@@ -293,15 +294,12 @@ class TideParse(object):
             self.max = level
             self.min = level
             self.levels.append(level)
-            self.times.append(time)
-      
+            self.times.append(parsetime(time))      
+
       def add(self, level, time):
             self.levels.append(level)
-            self.times.append(time)
+            self.times.append(parsetime(time))
             return self.parse()
-
-      def format(self,str):
-            return time.strptime(str, "%Y-%m-%dT%H:%M:%SZ")
 
       def get_time(self, level):
             return self.times[self.levels.index(level)] 
@@ -322,10 +320,10 @@ class TideParse(object):
            if (self.max == max(self.levels)) & (self.min == min(self.levels)):
                   #Possible turning point
                   if (self.increasing == True) & (self.levels[-1] < self.levels[-2]):
-                      t = self.format(self.get_time(self.max)) 
+                      t = self.get_time(self.max) 
                       return Tide(self.max, t, "High")
                   elif (self.increasing == False) & (self.levels[-1] > self.levels[-2]):
-                      t = self.format(self.get_time(self.min)) 
+                      t = self.get_time(self.min) 
                       return Tide(self.min, t, "Low")
                   else:
                       return None
@@ -334,8 +332,8 @@ max_spring_high_tide = 0
 max_neap_high_tide = 0
 min_spring_low_tide = 0 
 min_neap_low_tide = 0 
-# First we read the csv file and parse all the high/low tides
 
+# First we read the csv file and parse all the high/low tides
 def main(argv):
 
 # Handle command line arguments
@@ -373,11 +371,11 @@ def main(argv):
         row = next(tidedata)
  
         tc = TideParse(row['Water_Level'], row['time'])
-        levels.update({row['time'] : row['Water_Level']}) 
+        levels.update({parsetime(row['time']) : row['Water_Level']}) 
         
         for row in tidedata:
             tide = tc.add(row['Water_Level'], row['time'])
-            levels.update({row['time'] : row['Water_Level']}) 
+            levels.update({parsetime(row['time']) : row['Water_Level']}) 
  
             if tide:
                 tide_list.append(tide)
@@ -390,8 +388,6 @@ def main(argv):
     max_neap_high_tide = min(tide.get_level() for tide in high_tides)
     min_spring_low_tide = min(tide.get_level() for tide in low_tides)
     min_neap_low_tide = max(tide.get_level() for tide in low_tides)
-     
- 
     print("Max Spring high: ", max_spring_high_tide)
     print("Max Neap high:   ", max_neap_high_tide)
     print("Min Spring low:  ", min_spring_low_tide)
@@ -402,12 +398,11 @@ def main(argv):
      
     for date in daterange( start, end ):
         if date.weekday() == 6:
-            # define date string
-            date_string = "09:00 {}/{}/17".format(date.day, date.month)
-            tides = [tide for tide in tide_list if tide.isNear(date_string)]
-            high = [tide for tide in tides if tide.isNear(date_string) and tide.get_type() == "High"]
-            low = [tide for tide in tides if tide.isNear(date_string) and tide.get_type() == "Low"]
-            level = levels["2017-{:02d}-{:02d}T09:00:00Z".format(date.month, date.day)]
+            date = date.replace(hour = 9)
+            tides = [tide for tide in tide_list if tide.isNear(date)]
+            high = [tide for tide in tides if tide.isNear(date) and tide.get_type() == "High"]
+            low = [tide for tide in tides if tide.isNear(date) and tide.get_type() == "Low"]
+            level = levels[date]
  
             site = ""
             if white_strand_start(float(level)):
@@ -424,26 +419,26 @@ def main(argv):
                 site += "Kilkee\n"
  
             if high:
-                high_time = high[0].get_time() 
+                high_time = high[0].get_time().strftime("%H:%M") 
                 high_level = high[0].get_level() 
             else:
                 high_time = ""
                 high_level = ""
     
             if low:
-                low_time = low[0].get_time() 
+                low_time = low[0].get_time().strftime("%H:%M") 
                 low_level = low[0].get_level() 
             else:
                 low_time = ""
                 low_level = ""
  
-            r1 = diveplan.add_dive(date.strftime("%a"), date.strftime("%b\n%d"), site, "09:00", "", "", "{}\n{}m".format(high_time, high_level), "{}\n{}m".format(low_time, low_level))
-            # define date string
-            date_string = "12:00 {}/{}/17".format(date.day, date.month)
-            tides = [tide for tide in tide_list if tide.isNear(date_string)]
-            high = [tide for tide in tides if tide.isNear(date_string) and tide.get_type() == "High"]
-            low = [tide for tide in tides if tide.isNear(date_string) and tide.get_type() == "Low"]
-            level = levels["2017-{:02d}-{:02d}T12:00:00Z".format(date.month, date.day)]
+            r1 = diveplan.add_dive(date, site, "", "", "{}\n{}m".format(high_time, high_level), "{}\n{}m".format(low_time, low_level))
+            
+            date = date.replace(hour = 12)
+            tides = [tide for tide in tide_list if tide.isNear(date)]
+            high = [tide for tide in tides if tide.isNear(date) and tide.get_type() == "High"]
+            low = [tide for tide in tides if tide.isNear(date) and tide.get_type() == "Low"]
+            level = levels[date]
  
             site = ""
             if white_strand_start(float(level)):
@@ -460,20 +455,20 @@ def main(argv):
                 site += "Kilkee\n"
  
             if high:
-                high_time = high[0].get_time() 
+                high_time = high[0].get_time().strftime("%H:%M") 
                 high_level = high[0].get_level() 
             else:
                 high_time = ""
                 high_level = ""
     
             if low:
-                low_time = low[0].get_time() 
+                low_time = low[0].get_time().strftime("%H:%M") 
                 low_level = low[0].get_level() 
             else:
                 low_time = ""
                 low_level = ""
  
-            r2 = diveplan.add_dive(date.strftime("%a"), date.strftime("%b\n%d"), site, "12:00", "", "", "{}\n{}m".format(high_time, high_level), "{}\n{}m".format(low_time, low_level))
+            r2 = diveplan.add_dive(date, site, "", "", "{}\n{}m".format(high_time, high_level), "{}\n{}m".format(low_time, low_level))
  
             for id in [0,1,2,6,7]: 
                 c1 = r1.cells[id]
@@ -485,12 +480,11 @@ def main(argv):
      
             diveplan.add_blank()
         if date.weekday() == 2:
-            # define date string
-            date_string = "19:00 {}/{}/17".format(date.day, date.month)
-            tides = [tide for tide in tide_list if tide.isNear(date_string)]
-            high = [tide for tide in tides if tide.isNear(date_string) and tide.get_type() == "High"]
-            low = [tide for tide in tides if tide.isNear(date_string) and tide.get_type() == "Low"]
-            level = levels["2017-{:02d}-{:02d}T19:00:00Z".format(date.month, date.day)]
+            date = date.replace(hour = 19)
+            tides = [tide for tide in tide_list if tide.isNear(date)]
+            high = [tide for tide in tides if tide.isNear(date) and tide.get_type() == "High"]
+            low = [tide for tide in tides if tide.isNear(date) and tide.get_type() == "Low"]
+            level = levels[date]
  
             site = ""
             if white_strand_start(float(level)):
@@ -507,20 +501,22 @@ def main(argv):
                 site += "Kilkee\n"
  
             if high:
-                high_time = high[0].get_time() 
+                high_time = high[0].get_time().strftime("%H:%M") 
+
                 high_level = high[0].get_level() 
             else:
                 high_time = ""
                 high_level = ""
     
             if low:
-                low_time = low[0].get_time() 
+                low_time = low[0].get_time().strftime("%H:%M") 
+
                 low_level = low[0].get_level() 
             else:
                 low_time = ""
                 low_level = ""
  
-            diveplan.add_dive(date.strftime("%a"), date.strftime("%b\n%d"), site, "19:00", "", "", "{}\n{}m".format(high_time, high_level), "{}\n{}m".format(low_time, low_level))
+            diveplan.add_dive(date, site, "", "", "{}\n{}m".format(high_time, high_level), "{}\n{}m".format(low_time, low_level))
             diveplan.add_blank()
  
     if publish:
