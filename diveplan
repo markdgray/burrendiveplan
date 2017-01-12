@@ -23,37 +23,37 @@ def daterange(start_date, end_date):
             yield start_date + datetime.timedelta(n)
 
 def white_strand_start(level):
-    max_level = rule_of_twelfths(lahinch_spring_high_tide, lahinch_spring_low_tide, 1) 
+    max_level = rule_of_twelfths(max_spring_high_tide, min_spring_low_tide, 1) 
     min_level = -math.inf
     return level < max_level and level > min_level 
 
 def white_strand_end(level):
-    max_level = rule_of_twelfths(lahinch_spring_high_tide, lahinch_spring_low_tide, 1) 
+    max_level = rule_of_twelfths(max_spring_high_tide, min_spring_low_tide, 1) 
     min_level = -math.inf
     return level < max_level and level > min_level 
 
 def ballyvaughan_start(level):
-    max_level = rule_of_twelfths(lahinch_spring_high_tide, lahinch_spring_low_tide, 0) 
-    min_level = rule_of_twelfths(lahinch_neap_high_tide, lahinch_neap_low_tide, 1.5) 
+    max_level = rule_of_twelfths(max_spring_high_tide, min_spring_low_tide, 0) 
+    min_level = rule_of_twelfths(max_neap_high_tide, min_neap_low_tide, 1.5) 
     return level < max_level and level > min_level 
 
 def ballyvaughan_end(level):
-    max_level = rule_of_twelfths(lahinch_spring_high_tide, lahinch_spring_low_tide, 0) 
-    min_level = rule_of_twelfths(lahinch_neap_high_tide, lahinch_neap_low_tide, 1.5) 
+    max_level = rule_of_twelfths(max_spring_high_tide, min_spring_low_tide, 0) 
+    min_level = rule_of_twelfths(max_neap_high_tide, min_neap_low_tide, 1.5) 
     return level < max_level and level > min_level 
 
 def gleninagh_start(level):
-    max_level = rule_of_twelfths(lahinch_spring_high_tide, lahinch_spring_low_tide, 1) 
+    max_level = rule_of_twelfths(max_spring_high_tide, min_spring_low_tide, 1) 
     min_level = -math.inf
     return level < max_level and level > min_level 
 
 def gleninagh_end(level):
-    max_level = rule_of_twelfths(lahinch_spring_high_tide, lahinch_spring_low_tide, 1) 
+    max_level = rule_of_twelfths(max_spring_high_tide, min_spring_low_tide, 1) 
     min_level = -math.inf
     return level < max_level and level > min_level 
     
 def quilty_start(level):
-    min_level = rule_of_twelfths(lahinch_neap_high_tide, lahinch_neap_low_tide, 0) 
+    min_level = rule_of_twelfths(max_neap_high_tide, min_neap_low_tide, 0) 
     max_level = math.inf
     return level < max_level and level > min_level 
 
@@ -64,7 +64,7 @@ def quilty_end(level):
 
 def kilkee_start(level):
     max_level =  math.inf
-    min_level = rule_of_twelfths(lahinch_spring_high_tide, lahinch_spring_low_tide, 5) 
+    min_level = rule_of_twelfths(max_spring_high_tide, min_spring_low_tide, 5) 
     return level < max_level and level > min_level 
 
 def kilkee_end(level):
@@ -330,14 +330,15 @@ class TideParse(object):
                   else:
                       return None
 
-lahinch_spring_high_tide = 0
-lahinch_neap_high_tide = 0
-lahinch_spring_low_tide = 0 
-lahinch_neap_low_tide = 0 
+max_spring_high_tide = 0
+max_neap_high_tide = 0
+min_spring_low_tide = 0 
+min_neap_low_tide = 0 
 # First we read the csv file and parse all the high/low tides
 
 def main(argv):
 
+# Handle command line arguments
     data = 'data.csv'
     publish = False
     syntax = 'diveplan -d <inputfile> -p s <dd/mm/yy> -e <dd/mm/yy>'
@@ -365,8 +366,8 @@ def main(argv):
               
     tide_list = []
     levels = {}
-
                                              
+# Parse tide data
     with open(data, 'r') as csvfile:
         tidedata = csv.DictReader(csvfile)
         row = next(tidedata)
@@ -383,17 +384,18 @@ def main(argv):
                 tc = TideParse(row['Water_Level'], row['time'])
  
     high_tides = [tide for tide in tide_list if tide.get_type() == "High"]
-    lahinch_spring_high_tide = max(tide.get_level() for tide in high_tides)
-    lahinch_neap_high_tide = min(tide.get_level() for tide in high_tides)
     low_tides = [tide for tide in tide_list if tide.get_type() == "Low"]
-    lahinch_spring_low_tide = min(tide.get_level() for tide in low_tides)
-    lahinch_neap_low_tide = max(tide.get_level() for tide in low_tides)
+
+    max_spring_high_tide = max(tide.get_level() for tide in high_tides)
+    max_neap_high_tide = min(tide.get_level() for tide in high_tides)
+    min_spring_low_tide = min(tide.get_level() for tide in low_tides)
+    min_neap_low_tide = max(tide.get_level() for tide in low_tides)
      
  
-    print("Spring high: ", lahinch_spring_high_tide)
-    print("Neap high:   ", lahinch_neap_high_tide)
-    print("Spring low:  ", lahinch_spring_low_tide)
-    print("Neap Low:    ", lahinch_neap_low_tide)
+    print("Max Spring high: ", max_spring_high_tide)
+    print("Max Neap high:   ", max_neap_high_tide)
+    print("Min Spring low:  ", min_spring_low_tide)
+    print("Min Neap Low:    ", min_neap_low_tide)
  
     diveplan = DivePlan()
     diveplan.add_header("Day", "Date", "Venue", "Time", "DoD", "Coxn", "HW", "LW")
