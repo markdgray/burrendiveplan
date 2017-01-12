@@ -341,14 +341,15 @@ def main(argv):
     data = 'data.csv'
     publish = False
 
+    syntax = 'diveplan -d <inputfile>'
     try:
         opts, args = getopt.getopt(argv,"hd:p",["data="])
     except getopt.GetoptError:
-        print("diveplan -d <inputfile>")
+        print(syntax)
         sys.exit(2)
     for opt, arg in opts:
         if opt == '-h':
-            print ("diveplan -d <inputfile>")
+            print (syntax)
             sys.exit()
         elif opt in ("-p"):
             publish = True
