@@ -340,10 +340,10 @@ def main(argv):
 
     data = 'data.csv'
     publish = False
-
-    syntax = 'diveplan -d <inputfile>'
+    syntax = 'diveplan -d <inputfile> -p s <dd/mm/yy> -e <dd/mm/yy>'
+    
     try:
-        opts, args = getopt.getopt(argv,"hd:p",["data="])
+        opts, args = getopt.getopt(argv,"hd:ps:e:",["data="])
     except getopt.GetoptError:
         print(syntax)
         sys.exit(2)
@@ -351,10 +351,17 @@ def main(argv):
         if opt == '-h':
             print (syntax)
             sys.exit()
-        elif opt in ("-p"):
+        elif opt in ("-p", "--publish"):
             publish = True
         elif opt in ("-d", "--data"):
             data = arg
+        elif opt in ("-s", "--start"):
+            start = arg
+        elif opt in ("-e", "--end"):
+            end = arg
+
+    start = datetime.datetime.strptime(start, "%d/%m/%y")
+    end = datetime.datetime.strptime(end, "%d/%m/%y")
               
     tide_list = []
     levels = {}
@@ -391,9 +398,6 @@ def main(argv):
        diveplan = DivePlan()
        diveplan.add_header("Day", "Date", "Venue", "Time", "DoD", "Coxn", "HW", "LW")
         
-       start = datetime.date(year = 2017, month = 1, day = 1 )
-       end = datetime.date(year = 2017, month = 1, day = 31 )
-     
        for date in daterange( start, end ):
            if date.weekday() == 6:
                # define date string
