@@ -237,7 +237,43 @@ class DivePlan(object):
        c1 = t.cell(3,1) 
        c1.add_paragraph("Mark Gray - 085 7127021")
 
-    def add_dive(self, time, venue, dod, coxn, hw, lw): 
+    def add_dive(self, date, tide_list, levels):
+       tides = [tide for tide in tide_list if tide.isNear(date)]
+       high = [tide for tide in tides if tide.isNear(date) and tide.get_type() == "High"]
+       low = [tide for tide in tides if tide.isNear(date) and tide.get_type() == "Low"]
+       level = levels[date]
+
+       site = ""
+       if white_strand_start(float(level)):
+           site += "White Strand\n"
+       if gleninagh_start(float(level)):
+           site += "Gleninagh Pier\n"
+       if ballyvaughan_start(float(level)):
+           site += "Ballyvaughan Pier\n"
+       if quilty_start(float(level)):
+           site += "Quilty\n"
+       if doolin_start(float(level)):
+           site += "Doolin\n"
+       if kilkee_start(float(level)):
+           site += "Kilkee\n"
+
+       if high:
+           high_time = high[0].get_time().strftime("%H:%M") 
+           high_level = high[0].get_level() 
+       else:
+           high_time = ""
+           high_level = ""
+
+       if low:
+           low_time = low[0].get_time().strftime("%H:%M") 
+           low_level = low[0].get_level() 
+       else:
+           low_time = ""
+           low_level = ""
+
+       return self.add_row(date, site, "", "", "{}\n{}m".format(high_time, high_level), "{}\n{}m".format(low_time, low_level))
+       
+    def add_row(self, time, venue, dod, coxn, hw, lw): 
        r = self.dive_table.add_row()
        r.cells[0].text = time.strftime("%a")
        r.cells[1].text = time.strftime("%b\n%d")
@@ -408,124 +444,22 @@ def main(argv):
     for date in daterange( start, end ):
         if date.weekday() == 6:
             date = date.replace(hour = 9)
-            tides = [tide for tide in tide_list if tide.isNear(date)]
-            high = [tide for tide in tides if tide.isNear(date) and tide.get_type() == "High"]
-            low = [tide for tide in tides if tide.isNear(date) and tide.get_type() == "Low"]
-            level = levels[date]
- 
-            site = ""
-            if white_strand_start(float(level)):
-                site += "White Strand\n"
-            if gleninagh_start(float(level)):
-                site += "Gleninagh Pier\n"
-            if ballyvaughan_start(float(level)):
-                site += "Ballyvaughan Pier\n"
-            if quilty_start(float(level)):
-                site += "Quilty\n"
-            if doolin_start(float(level)):
-                site += "Doolin\n"
-            if kilkee_start(float(level)):
-                site += "Kilkee\n"
- 
-            if high:
-                high_time = high[0].get_time().strftime("%H:%M") 
-                high_level = high[0].get_level() 
-            else:
-                high_time = ""
-                high_level = ""
-    
-            if low:
-                low_time = low[0].get_time().strftime("%H:%M") 
-                low_level = low[0].get_level() 
-            else:
-                low_time = ""
-                low_level = ""
- 
-            r1 = diveplan.add_dive(date, site, "", "", "{}\n{}m".format(high_time, high_level), "{}\n{}m".format(low_time, low_level))
-            
+            r1 = diveplan.add_dive(date, tide_list, levels)
+
             date = date.replace(hour = 12)
-            tides = [tide for tide in tide_list if tide.isNear(date)]
-            high = [tide for tide in tides if tide.isNear(date) and tide.get_type() == "High"]
-            low = [tide for tide in tides if tide.isNear(date) and tide.get_type() == "Low"]
-            level = levels[date]
- 
-            site = ""
-            if white_strand_start(float(level)):
-                site += "White Strand\n"
-            if gleninagh_start(float(level)):
-                site += "Gleninagh Pier\n"
-            if ballyvaughan_start(float(level)):
-                site += "Ballyvaughan Pier\n"
-            if quilty_start(float(level)):
-                site += "Quilty\n"
-            if doolin_start(float(level)):
-                site += "Doolin\n"
-            if kilkee_start(float(level)):
-                site += "Kilkee\n"
- 
-            if high:
-                high_time = high[0].get_time().strftime("%H:%M") 
-                high_level = high[0].get_level() 
-            else:
-                high_time = ""
-                high_level = ""
-    
-            if low:
-                low_time = low[0].get_time().strftime("%H:%M") 
-                low_level = low[0].get_level() 
-            else:
-                low_time = ""
-                low_level = ""
- 
-            r2 = diveplan.add_dive(date, site, "", "", "{}\n{}m".format(high_time, high_level), "{}\n{}m".format(low_time, low_level))
- 
+            r2 = diveplan.add_dive(date, tide_list, levels)
+                
             for id in [0,1,2,6,7]: 
                 c1 = r1.cells[id]
                 text = c1.text
                 c2 = r2.cells[id]
                 c1 = c1.merge(c2)
                 c1.text = text
-                
-     
             diveplan.add_blank()
+
         if date.weekday() == 2:
             date = date.replace(hour = 19)
-            tides = [tide for tide in tide_list if tide.isNear(date)]
-            high = [tide for tide in tides if tide.isNear(date) and tide.get_type() == "High"]
-            low = [tide for tide in tides if tide.isNear(date) and tide.get_type() == "Low"]
-            level = levels[date]
- 
-            site = ""
-            if white_strand_start(float(level)):
-                site += "White Strand\n"
-            if gleninagh_start(float(level)):
-                site += "Gleninagh Pier\n"
-            if ballyvaughan_start(float(level)):
-                site += "Ballyvaughan Pier\n"
-            if quilty_start(float(level)):
-                site += "Quilty\n"
-            if doolin_start(float(level)):
-                site += "Doolin\n"
-            if kilkee_start(float(level)):
-                site += "Kilkee\n"
- 
-            if high:
-                high_time = high[0].get_time().strftime("%H:%M") 
-
-                high_level = high[0].get_level() 
-            else:
-                high_time = ""
-                high_level = ""
-    
-            if low:
-                low_time = low[0].get_time().strftime("%H:%M") 
-
-                low_level = low[0].get_level() 
-            else:
-                low_time = ""
-                low_level = ""
- 
-            diveplan.add_dive(date, site, "", "", "{}\n{}m".format(high_time, high_level), "{}\n{}m".format(low_time, low_level))
+            r1 = diveplan.add_dive(date, tide_list, levels)
             diveplan.add_blank()
  
     if publish:
