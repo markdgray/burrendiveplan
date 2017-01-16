@@ -340,6 +340,8 @@ def main(argv):
     data = 'data.csv'
     publish = False
     syntax = 'diveplan -d <inputfile> -p s <dd/mm/yy> -e <dd/mm/yy>'
+    start = None
+    end = None
     
     try:
         opts, args = getopt.getopt(argv,"hd:ps:e:",["data="])
@@ -358,6 +360,13 @@ def main(argv):
             start = arg
         elif opt in ("-e", "--end"):
             end = arg
+            
+    if not start:
+        print(syntax)
+        sys.exit(2)
+    if not end:
+        print(syntax)
+        sys.exit(2)
 
     start = datetime.datetime.strptime(start, "%d/%m/%y")
     end = datetime.datetime.strptime(end, "%d/%m/%y")
