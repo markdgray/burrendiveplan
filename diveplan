@@ -85,6 +85,9 @@ class DivePlan(object):
        self.table.style = 'Table Grid'
        self.table.alignment = WD_TABLE_ALIGNMENT.CENTER
        self.table.style.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
+       font = self.table.style.font
+       font.name = "Arial"
+       font.size = Pt(10)
 
     def add_dive(self, date, tide_list, levels, sites):
        tides = [tide for tide in tide_list if tide.isNear(date)]
@@ -319,7 +322,7 @@ def main(argv):
     sites.append(site)
     
     diveplan = DivePlan()
-    diveplan.add_header("Day", "Date", "Venue", "Time", "DoD", "Coxn", "HW", "LW")
+#    diveplan.add_header("Day", "Date", "Venue", "Time", "DoD", "Coxn", "HW", "LW")
      
     for date in daterange( start, end ):
         if date.weekday() == 6:
