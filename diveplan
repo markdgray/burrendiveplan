@@ -25,66 +25,42 @@ def daterange(start, end):
         for n in range((end - start).days + 1):
             yield start + datetime.timedelta(n)
 
-def white_strand_start(level):
-    max_level = rule_of_twelfths(max_spring_high_tide, min_spring_low_tide, 1) 
-    min_level = -math.inf
-    return level < max_level and level > min_level 
+class DiveSite(object):
+    name = ""
+# The max level the tide should be at at start of dive
+    start_level_max = math.inf 
+# The min level the tide should be at at start of dive
+    start_level_min = -math.inf  
+# The max level the tide should be at at end of dive
+    end_level_max = math.inf 
+# The min level the tide should be at at end of dive
+    end_level_min = -math.inf 
+# The distance from site to point of departure in time    
+    dist = 0
 
-def white_strand_end(level):
-    max_level = rule_of_twelfths(max_spring_high_tide, min_spring_low_tide, 1) 
-    min_level = -math.inf
-    return level < max_level and level > min_level 
+    def __init__(self, name, start_level_max, start_level_min, end_level_max, end_level_min):
+        self.start_level_max = start_level_max
+        self.start_level_min = start_level_min 
+        self.end_level_max =  end_level_max
+        self.end_level_min =  end_level_min
+        self.name = name
 
-def ballyvaughan_start(level):
-    max_level = rule_of_twelfths(max_spring_high_tide, min_spring_low_tide, 0) 
-    min_level = rule_of_twelfths(max_neap_high_tide, min_neap_low_tide, 1.5) 
-    return level < max_level and level > min_level 
+    def can_dive(self, start_level): #, end_level):
+#print("Level: ", start_level, ", self.start_level_max:", self.start_level_max, ", self.start_level_min:", self.start_level_min) 
+        if start_level > self.start_level_max:
+            return False
+        if start_level < self.start_level_min:
+            return False
+#if end_level > self.end_level_max:
+#            return False
+#        if end_level < self.end_level_min:
+#            return False
+        else:
+            return True
 
-def ballyvaughan_end(level):
-    max_level = rule_of_twelfths(max_spring_high_tide, min_spring_low_tide, 0) 
-    min_level = rule_of_twelfths(max_neap_high_tide, min_neap_low_tide, 1.5) 
-    return level < max_level and level > min_level 
+    def __repr__(self):
+        return self.name
 
-def gleninagh_start(level):
-    max_level = rule_of_twelfths(max_spring_high_tide, min_spring_low_tide, 1) 
-    min_level = -math.inf
-    return level < max_level and level > min_level 
-
-def gleninagh_end(level):
-    max_level = rule_of_twelfths(max_spring_high_tide, min_spring_low_tide, 1) 
-    min_level = -math.inf
-    return level < max_level and level > min_level 
-    
-def quilty_start(level):
-    min_level = rule_of_twelfths(max_neap_high_tide, min_neap_low_tide, 0) 
-    max_level = math.inf
-    return level < max_level and level > min_level 
-
-def quilty_end(level):
-    max_level = math.inf
-    min_level = -math.inf
-    return level < max_level and level > min_level 
-
-def kilkee_start(level):
-    max_level =  math.inf
-    min_level = rule_of_twelfths(max_spring_high_tide, min_spring_low_tide, 5) 
-    return level < max_level and level > min_level 
-
-def kilkee_end(level):
-    max_level = math.inf 
-    min_level = -math.inf
-    return level < max_level and level > min_level 
-
-def doolin_start(level):
-    max_level = math.inf
-    min_level = -math.inf
-    return level < max_level and level > min_level 
-
-def doolin_end(level):
-    max_level = math.inf 
-    min_level = -math.inf
-    return level < max_level and level > min_level 
-    
 def rule_of_twelfths(high, low, time): # time in hours relative to high
      range = float(high)- float(low)
      return float(low) + (range * (math.cos(math.pi * time/6) + 1 ) / 2)
@@ -237,25 +213,13 @@ class DivePlan(object):
        c1 = t.cell(3,1) 
        c1.add_paragraph("Mark Gray - 085 7127021")
 
-    def add_dive(self, date, tide_list, levels):
+    def add_dive(self, date, tide_list, levels, sites):
        tides = [tide for tide in tide_list if tide.isNear(date)]
        high = [tide for tide in tides if tide.isNear(date) and tide.get_type() == "High"]
        low = [tide for tide in tides if tide.isNear(date) and tide.get_type() == "Low"]
        level = levels[date]
 
-       site = ""
-       if white_strand_start(float(level)):
-           site += "White Strand\n"
-       if gleninagh_start(float(level)):
-           site += "Gleninagh Pier\n"
-       if ballyvaughan_start(float(level)):
-           site += "Ballyvaughan Pier\n"
-       if quilty_start(float(level)):
-           site += "Quilty\n"
-       if doolin_start(float(level)):
-           site += "Doolin\n"
-       if kilkee_start(float(level)):
-           site += "Kilkee\n"
+       site = [site for site in sites if site.can_dive(float(level))]
 
        if high:
            high_time = high[0].get_time().strftime("%H:%M") 
@@ -277,13 +241,13 @@ class DivePlan(object):
        r = self.dive_table.add_row()
        r.cells[0].text = time.strftime("%a")
        r.cells[1].text = time.strftime("%b\n%d")
-       r.cells[2].text = venue
+       r.cells[2].text = str(venue)
        r.cells[3].text = time.strftime("%H:%M")
        r.cells[4].text = dod 
        r.cells[5].text = coxn 
        r.cells[6].text = hw 
        r.cells[7].text = lw 
-       print("Day:", time.strftime("%a"), ",Date:", time.strftime("%b %d"), ",Venue:", venue.replace('\n',' '), ",Time:", time.strftime("%H:%M"), ",HW:", hw.replace('\n',' '), ",LW:", lw.replace('\n',' ')) 
+       print("Day:", time.strftime("%a"), ",Date:", time.strftime("%b %d"), ",Venue:", venue, ",Time:", time.strftime("%H:%M"), ",HW:", hw.replace('\n',' '), ",LW:", lw.replace('\n',' ')) 
        return r
        
     def add_blank(self): 
@@ -409,6 +373,7 @@ def main(argv):
               
     tide_list = []
     levels = {}
+    sites = []
                                              
 # Parse tide data
     with open(data, 'r') as csvfile:
@@ -438,16 +403,58 @@ def main(argv):
     print("Min Spring low:  ", min_spring_low_tide)
     print("Min Neap Low:    ", min_neap_low_tide)
  
+    site = DiveSite("White Strand", 
+                    start_level_max = rule_of_twelfths(max_spring_high_tide, min_spring_low_tide, 2), 
+                    start_level_min = -math.inf,
+                    end_level_max = rule_of_twelfths(max_spring_high_tide, min_spring_low_tide, 2), 
+                    end_level_min = -math.inf)
+    sites.append(site)
+
+    site = DiveSite("Ballyvaughan", 
+                    start_level_max = math.inf, 
+                    start_level_min = rule_of_twelfths(max_neap_high_tide, min_neap_low_tide, 1.5), 
+                    end_level_max = math.inf, 
+                    end_level_min = rule_of_twelfths(max_neap_high_tide, min_neap_low_tide, 1.5))
+    sites.append(site)
+
+    site = DiveSite("Gleninagh", 
+                    start_level_max = rule_of_twelfths(max_spring_high_tide, min_spring_low_tide, 1), 
+                    start_level_min = -math.inf,
+                    end_level_max = rule_of_twelfths(max_spring_high_tide, min_spring_low_tide, 1), 
+                    end_level_min = -math.inf)
+    sites.append(site)
+
+    site = DiveSite("Quilty", 
+                    start_level_max = math.inf,
+                    start_level_min = rule_of_twelfths(max_neap_high_tide, min_neap_low_tide, 0), 
+                    end_level_max = math.inf,
+                    end_level_min = -math.inf)
+    sites.append(site)
+
+    site = DiveSite("Kilkee", 
+                    start_level_max =  math.inf,
+                    start_level_min = rule_of_twelfths(max_spring_high_tide, min_spring_low_tide, 5), 
+                    end_level_max = math.inf, 
+                    end_level_min = rule_of_twelfths(max_spring_high_tide, min_spring_low_tide, 5))
+    sites.append(site)
+
+    site = DiveSite("Doolin", 
+                    start_level_max = math.inf,
+                    start_level_min = -math.inf, 
+                    end_level_max = math.inf, 
+                    end_level_min = -math.inf)
+    sites.append(site)
+    
     diveplan = DivePlan()
     diveplan.add_header("Day", "Date", "Venue", "Time", "DoD", "Coxn", "HW", "LW")
      
     for date in daterange( start, end ):
         if date.weekday() == 6:
             date = date.replace(hour = 9)
-            r1 = diveplan.add_dive(date, tide_list, levels)
+            r1 = diveplan.add_dive(date, tide_list, levels, sites)
 
             date = date.replace(hour = 12)
-            r2 = diveplan.add_dive(date, tide_list, levels)
+            r2 = diveplan.add_dive(date, tide_list, levels, sites)
                 
             for id in [0,1,2,6,7]: 
                 c1 = r1.cells[id]
@@ -459,7 +466,7 @@ def main(argv):
 
         if date.weekday() == 2:
             date = date.replace(hour = 19)
-            r1 = diveplan.add_dive(date, tide_list, levels)
+            r1 = diveplan.add_dive(date, tide_list, levels, sites)
             diveplan.add_blank()
  
     if publish:
