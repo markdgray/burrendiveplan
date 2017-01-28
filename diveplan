@@ -216,9 +216,9 @@ def main(argv):
     parser = argparse.ArgumentParser(description='Calculate dive plan.') 
 
     parser.add_argument('--publish','-p', action='store_true', help='Create table in word document.')
-    parser.add_argument('--data','-d', default='data.csv', help='Location of raw data file in CSV format.')
-    parser.add_argument('--start','-s', required=True, help='Starting date to calculate dive plan from. Should be in the format dd/mm/yy.')
-    parser.add_argument('--end','-e', required=True, help='Ending date to calculate dive plan to. Should be in the format dd/mm/yy.')
+    parser.add_argument('--data','-d', default='data.csv', metavar = "<data_file>", help='Location of raw data file in CSV format.')
+    parser.add_argument('--start','-s', required=True, metavar = "dd/mm/yy", help='Starting date to calculate dive plan from.')
+    parser.add_argument('--end','-e', required=True, metavar = "dd/mm/yy",help='Ending date to calculate dive plan to.')
 
     args = parser.parse_args()
 
