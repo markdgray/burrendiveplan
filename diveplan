@@ -2,11 +2,11 @@
 
 import csv
 import sys
-import getopt
 import datetime
 import math
 import time
 import itertools
+import argparse
 from docx.enum.style import WD_STYLE_TYPE
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.enum.table import WD_TABLE_ALIGNMENT
@@ -213,37 +213,20 @@ min_neap_low_tide = 0
 def main(argv):
 
 # Handle command line arguments
-    data = 'data.csv'
-    publish = False
-    syntax = 'diveplan -d <inputfile> -p s <dd/mm/yy> -e <dd/mm/yy>'
-    start = None
-    end = None
-    
-    try:
-        opts, args = getopt.getopt(argv,"hd:ps:e:",["data="])
-    except getopt.GetoptError:
-        print(syntax)
-        sys.exit(2)
-    for opt, arg in opts:
-        if opt == '-h':
-            print (syntax)
-            sys.exit()
-        elif opt in ("-p", "--publish"):
-            publish = True
-        elif opt in ("-d", "--data"):
-            data = arg
-        elif opt in ("-s", "--start"):
-            start = arg
-        elif opt in ("-e", "--end"):
-            end = arg
-            
-    if not start:
-        print(syntax)
-        sys.exit(2)
-    if not end:
-        print(syntax)
-        sys.exit(2)
+    parser = argparse.ArgumentParser(description='Calculate dive plan.') 
 
+    parser.add_argument('--publish','-p', action='store_true', help='Create table in word document.')
+    parser.add_argument('--data','-d', default='data.csv', help='Location of raw data file in CSV format.')
+    parser.add_argument('--start','-s', required=True, help='Starting date to calculate dive plan from. Should be in the format dd/mm/yy.')
+    parser.add_argument('--end','-e', required=True, help='Ending date to calculate dive plan to. Should be in the format dd/mm/yy.')
+
+    args = parser.parse_args()
+
+    publish = args.publish
+    data = args.data
+    start = args.start
+    end = args.end
+            
     start = datetime.datetime.strptime(start, "%d/%m/%y")
     end = datetime.datetime.strptime(end, "%d/%m/%y")
               
