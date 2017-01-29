@@ -209,6 +209,10 @@ max_neap_high_tide = 0
 min_spring_low_tide = 0 
 min_neap_low_tide = 0 
 
+def datetype(string):
+    value = datetime.datetime.strptime(string, "%d/%m/%y")
+    return value
+
 # First we read the csv file and parse all the high/low tides
 def main(argv):
 
@@ -217,8 +221,8 @@ def main(argv):
 
     parser.add_argument('--publish','-p', action='store_true', help='Create table in word document.')
     parser.add_argument('--data','-d', default='data.csv', metavar = "<data_file>", help='Location of raw data file in CSV format.')
-    parser.add_argument('--start','-s', required=True, metavar = "dd/mm/yy", help='Starting date to calculate dive plan from.')
-    parser.add_argument('--end','-e', required=True, metavar = "dd/mm/yy",help='Ending date to calculate dive plan to.')
+    parser.add_argument('--start','-s', required=True, metavar = "dd/mm/yy", type=datetype, help='Starting date to calculate dive plan from.')
+    parser.add_argument('--end','-e', required=True, metavar = "dd/mm/yy", type=datetype, help='Ending date to calculate dive plan to.')
 
     args = parser.parse_args()
 
@@ -227,9 +231,6 @@ def main(argv):
     start = args.start
     end = args.end
             
-    start = datetime.datetime.strptime(start, "%d/%m/%y")
-    end = datetime.datetime.strptime(end, "%d/%m/%y")
-              
     tide_list = []
     levels = {}
     sites = []
