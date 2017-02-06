@@ -7,6 +7,7 @@ import math
 import time
 import itertools
 import argparse
+import calendar
 from docx.enum.style import WD_STYLE_TYPE
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.enum.table import WD_TABLE_ALIGNMENT
@@ -213,6 +214,16 @@ def datetype(string):
     value = datetime.datetime.strptime(string, "%d/%m/%y")
     return value
 
+def divetimetype(string):
+# datetime will make the date 1/1/1900 by default. This was
+# a Monday
+    value = datetime.datetime.strptime(string, "%a %H:%M")
+# Calculate day of the week as a number with Mon = 0
+    day_offset = list(calendar.day_abbr).index(string.split()[0])
+# Update date to reflect the correct day of week
+    value = value + datetime.timedelta(days=day_offset)
+    return value
+
 # First we read the csv file and parse all the high/low tides
 def main(argv):
 
@@ -223,6 +234,7 @@ def main(argv):
     parser.add_argument('--data','-d', default='data.csv', metavar = "<data_file>", help='Location of raw data file in CSV format.')
     parser.add_argument('--start','-s', required=True, metavar = "dd/mm/yy", type=datetype, help='Starting date to calculate dive plan from.')
     parser.add_argument('--end','-e', required=True, metavar = "dd/mm/yy", type=datetype, help='Ending date to calculate dive plan to.')
+    parser.add_argument('--time','-t', required=True, action='append' , metavar = "\"<Mon/Tue/Wed/Thu/Fri/Sat/Sun> HH:MM\"", type=divetimetype, help='Specify the days and times for dives.')
 
     args = parser.parse_args()
 
@@ -308,27 +320,21 @@ def main(argv):
     diveplan = DivePlan()
 #    diveplan.add_header("Day", "Date", "Venue", "Time", "DoD", "Coxn", "HW", "LW")
      
-    for date in daterange( start, end ):
-        if date.weekday() == 6:
-            date = date.replace(hour = 9)
-            r1 = diveplan.add_dive(date, tide_list, levels, sites)
+    for date in daterange(start, end):
+        r_last = None
+        for divedate in args.time:
+            if date.weekday() == divedate.weekday():
+                date = date.replace(hour=divedate.hour, minute=divedate.minute)
+                r = diveplan.add_dive(date, tide_list, levels, sites)
+                if r_last:
+                    for id in [0,1,2,6,7]:
+                        c1 = r_last.cells[id]
+                        text = c1.text
+                        c2 = r.cells[id]
+                        c1 = c1.merge(c2)
+                        c1.text = text
+                r_last = r
 
-            date = date.replace(hour = 12)
-            r2 = diveplan.add_dive(date, tide_list, levels, sites)
-                
-            for id in [0,1,2,6,7]: 
-                c1 = r1.cells[id]
-                text = c1.text
-                c2 = r2.cells[id]
-                c1 = c1.merge(c2)
-                c1.text = text
-            diveplan.add_blank()
-
-        if date.weekday() == 2:
-            date = date.replace(hour = 19)
-            r1 = diveplan.add_dive(date, tide_list, levels, sites)
-            diveplan.add_blank()
- 
     if publish:
         diveplan.publish()
 
