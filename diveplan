@@ -8,6 +8,8 @@ import time
 import itertools
 import argparse
 import calendar
+import wget
+import os
 from docx.enum.style import WD_STYLE_TYPE
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.enum.table import WD_TABLE_ALIGNMENT
@@ -15,8 +17,10 @@ from docx import Document
 from docx.shared import Pt 
 
 #pip install python-docx
+#pip install python3-wget
 
 #Data from data.marine.ie/Dataset/Details/20955
+#http://erddap.marine.ie/erddap/tabledap/IMI-TidePrediction.csv?&stationID=%22Lahinch_MODELLED%22&time%3E=2017-01-01T00:00:00Z&time%3C=2017-12-31T00:20:00Z&longitude%3E=-10.27019&longitude%3C=-5.92167&latitude%3E=51.53115&latitude%3C=55.37168
 
 def parsetime(time):
     return datetime.datetime.strptime(time, "%Y-%m-%dT%H:%M:%SZ")
@@ -235,6 +239,7 @@ def main(argv):
     parser.add_argument('--start','-s', required=True, metavar = "dd/mm/yy", type=datetype, help='Starting date to calculate dive plan from.')
     parser.add_argument('--end','-e', required=True, metavar = "dd/mm/yy", type=datetype, help='Ending date to calculate dive plan to.')
     parser.add_argument('--time','-t', required=True, action='append' , metavar = "\"<Mon/Tue/Wed/Thu/Fri/Sat/Sun> HH:MM\"", type=divetimetype, help='Specify the days and times for dives.')
+    parser.add_argument('--overwrite','-o', action='store_true',  help='Overwrite data file if file exists.')
 
     args = parser.parse_args()
 
@@ -243,6 +248,17 @@ def main(argv):
     start = args.start
     end = args.end
             
+
+    if args.overwrite:
+        try:
+            os.remove(data)
+        except OSError:
+            pass
+
+# Get all data for the calendar year
+    url = "http://erddap.marine.ie/erddap/tabledap/IMI-TidePrediction.csv?&stationID=%22Lahinch_MODELLED%22&time%3E=" + start.strftime("%Y-01-01T00:00:00Z") + "&time%3C=" + end.strftime("%Y-12-31T23:59:00Z") + "&longitude%3E=-10.27019&longitude%3C=-5.92167&latitude%3E=51.53115&latitude%3C=55.37168"
+    data = wget.download(url, out=data)
+
     tide_list = []
     levels = {}
     sites = []
@@ -250,6 +266,8 @@ def main(argv):
 # Parse tide data
     with open(data, 'r') as csvfile:
         tidedata = csv.DictReader(csvfile)
+# skip title row in csv file
+        row = next(tidedata)
         row = next(tidedata)
  
         tc = TideParse(row['Water_Level'], row['time'])
