@@ -257,7 +257,7 @@ def main(argv):
 
 # Get all data for the calendar year
     url = "http://erddap.marine.ie/erddap/tabledap/IMI-TidePrediction.csv?&stationID=%22Lahinch_MODELLED%22&time%3E=" + start.strftime("%Y-01-01T00:00:00Z") + "&time%3C=" + end.strftime("%Y-12-31T23:59:00Z") + "&longitude%3E=-10.27019&longitude%3C=-5.92167&latitude%3E=51.53115&latitude%3C=55.37168"
-    data = wget.download(url, out=data)
+    data = wget.download(url, out=data, bar=None)
 
     tide_list = []
     levels = {}
